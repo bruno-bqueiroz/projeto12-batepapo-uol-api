@@ -17,7 +17,7 @@ mongoClient.connect().then(()=>{
 })
     
 let tem = undefined;
-
+// CADASTRO DE PARTICIPANTES
     server.post('/participants', (req, res) =>{
         const nome = req.body.name;
        
@@ -36,25 +36,35 @@ let tem = undefined;
         db.collection('mensagens').insertOne({from: nome, to: 'Todos', text: 'entra na sala...', type: 'status', time: dayjs().format('HH:mm:ss')})
             res.sendStatus(201);
     });
-
+// LISTA DE PARTICIPANTES
     server.get('/participants', (req, res) => {
         db.collection('cadastrados').find().toArray().then(data =>{
             console.log(data)
             res.send(data)
         })
     });
-
+// ENVIAR MENSAGENS
     server.post('/messages', (req, res)=>{
         const {to, text, type} = req.body;
         const from = req.headers.user;
         console.log(req.headers.user);
 
+        db.collection('cadastrados').findOne({ name: from }).then((data)=>{
+            console.log(data);
+            tem = data;
+        })
+        
         if (to === ""|| text === ""
         || type !== 'message' && type !== 'private_message'
-        || !cadastro.find((value) => value.name === from)){
+        || tem === null){
             return res.sendStatus(422);
         }
-        res.send(201);
+        db.collection('mensagens').insertOne({from: from, to: to, text: text, type: type, time: dayjs().format('HH:mm:ss')})
+        res.sendStatus(201);
+    })
+
+    server.get('/messages', (req, res) =>{
+        
     })
 
 server.listen(5000, () => console.log('listen on port 5000'));
