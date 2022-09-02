@@ -1,6 +1,7 @@
 import express from "express";
 import cors from 'cors';
-import dayjs from 'dayjs'
+import dayjs from 'dayjs';
+import joi from 'joi';
 import { MongoClient } from "mongodb";
 import dotenv from 'dotenv';
 dotenv.config();
@@ -12,33 +13,48 @@ server.use(express.json());
 const mongoClient = new MongoClient(process.env.MONGO_URI);
 
 let db;
+
 mongoClient.connect().then(()=>{
     db = mongoClient.db('test');
 })
     
-let tem = undefined;
+const nomeSchema = joi.object({
+    name: joi.string().required(),
+})
+
 // CADASTRO DE PARTICIPANTES
-    server.post('/participants', (req, res) =>{
+    server.post('/participants', async (req, res) =>{
         const nome = req.body.name;
-       
-        db.collection('cadastrados').findOne({ name: nome }).then((data)=>{
-            console.log(data);
-            tem = data;
-        })
-       
-         if (nome === ""){
-            return res.sendStatus(422);
-        } else if(tem !== null){
-            return res.sendStatus(409);
-        } 
-  
-        db.collection('cadastrados').insertOne({name: nome, lastStatus: Date.now()})
-        db.collection('mensagens').insertOne({from: nome, to: 'Todos', text: 'entra na sala...', type: 'status', time: dayjs().format('HH:mm:ss')})
+        const validation = nomeSchema.validate(req.body);
+
+        if(validation.error){
+            return res.status(422).send(validation.error.message);
+        }
+
+        try {
+            const response = await db.collection('cadastrados').findOne({ name: nome });
+             if(response !== null){
+                return res.sendStatus(409);
+            } 
+        } catch (error) {
+            console.log(error);
+            return res.sendStatus(500);
+        }
+         try {
+           const responseCadastro = await db.collection('cadastrados').insertOne({name: nome, lastStatus: Date.now()});
+
+            const responseMensagem = await db.collection('mensagens').insertOne({from: nome, to: 'Todos', text: 'entra na sala...', type: 'status', time: dayjs().format('HH:mm:ss')})
+                
+                console.log(responseCadastro);
+                console.log(responseMensagem);
             res.sendStatus(201);
+         } catch (error) {
+            console.log(error);
+            res.sendStatus(500);
+         }
     });
 
     
-
 // LISTA DE PARTICIPANTES
     server.get('/participants', async(req, res) => {
         try {
