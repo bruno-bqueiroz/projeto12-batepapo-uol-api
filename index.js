@@ -36,35 +36,60 @@ let tem = undefined;
         db.collection('mensagens').insertOne({from: nome, to: 'Todos', text: 'entra na sala...', type: 'status', time: dayjs().format('HH:mm:ss')})
             res.sendStatus(201);
     });
+
+    
+
 // LISTA DE PARTICIPANTES
-    server.get('/participants', (req, res) => {
-        db.collection('cadastrados').find().toArray().then(data =>{
-            console.log(data)
-            res.send(data)
-        })
+    server.get('/participants', async(req, res) => {
+        try {
+            const response = await db.collection('cadastrados').find().toArray()
+            res.send(response)
+        } catch (error) {
+            console.log(error);
+            res.sendStatus(500);
+        }
+
+        
+        
     });
 // ENVIAR MENSAGENS
-    server.post('/messages', (req, res)=>{
+    server.post('/messages', async (req, res)=>{
         const {to, text, type} = req.body;
         const from = req.headers.user;
         console.log(req.headers.user);
 
-        db.collection('cadastrados').findOne({ name: from }).then((data)=>{
-            console.log(data);
-            tem = data;
-        })
+        try {
+            const response = await db.collection('cadastrados').findOne({ name: from });
+            console.log(response);
+            tem = response;
+        } catch (error) {
+            console.log(error);
+            res.sendStatus(500);
+        }
         
         if (to === ""|| text === ""
         || type !== 'message' && type !== 'private_message'
         || tem === null){
             return res.sendStatus(422);
         }
-        db.collection('mensagens').insertOne({from: from, to: to, text: text, type: type, time: dayjs().format('HH:mm:ss')})
-        res.sendStatus(201);
-    })
 
-    server.get('/messages', (req, res) =>{
+        try {
+            const retorno = await db.collection('mensagens').insertOne({from: from, to: to, text: text, type: type, time: dayjs().format('HH:mm:ss')})
+        console.log(retorno);
+        res.sendStatus(201);
+        } catch (error) {
+            console.log(error);
+            res.sendStatus(500);
+        }
+
         
+    })
+    
+    server.get('/messages', (req, res) =>{
+        db.collection('mensagens').find().toArray().then((data)=>{
+            console.log(data);
+        });
+        res.sendStatus(201);
     })
 
 server.listen(5000, () => console.log('listen on port 5000'));
