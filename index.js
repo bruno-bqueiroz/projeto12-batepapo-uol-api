@@ -20,7 +20,14 @@ mongoClient.connect().then(()=>{
     
 const nomeSchema = joi.object({
     name: joi.string().required(),
+});
+
+const mensagensSchema = joi.object({
+    to: joi.string().required(),
+    text: joi.string().required(),
+    type: joi.string().valid('message').valid('private_message').required()
 })
+
 
 // CADASTRO DE PARTICIPANTES
     server.post('/participants', async (req, res) =>{
@@ -54,7 +61,7 @@ const nomeSchema = joi.object({
          }
     });
 
-    
+
 // LISTA DE PARTICIPANTES
     server.get('/participants', async(req, res) => {
         try {
@@ -74,19 +81,19 @@ const nomeSchema = joi.object({
         const from = req.headers.user;
         console.log(req.headers.user);
 
+        const validation = mensagensSchema.validate(req.body);
+        if(validation.error){
+            return res.status(422).send(validation.error.message)
+        }
+        
         try {
             const response = await db.collection('cadastrados').findOne({ name: from });
-            console.log(response);
-            tem = response;
+            if(response.name === null){
+                return res.sendStatus(422);
+            }
         } catch (error) {
             console.log(error);
             res.sendStatus(500);
-        }
-        
-        if (to === ""|| text === ""
-        || type !== 'message' && type !== 'private_message'
-        || tem === null){
-            return res.sendStatus(422);
         }
 
         try {
