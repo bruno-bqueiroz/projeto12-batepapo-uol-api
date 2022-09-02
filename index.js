@@ -105,12 +105,10 @@ const mensagensSchema = joi.object({
             res.sendStatus(500);
         }
     })
-    
+// RECEBER MENSAGENS
     server.get('/messages', async (req, res) =>{
         const { limit } = req.query;
         const usuario = req.headers.user;
-
-        
 
         try {
             if (limit){
@@ -121,7 +119,27 @@ const mensagensSchema = joi.object({
             const resposta = await db.collection('mensagens').find({$or: [{ from: usuario } , { to: 'todos' } , {to: usuario }]}).toArray();
             return res.send(resposta);
             
+        } catch (error) {
+            console.log(error);
+            res.sendStatus(500);
+        }
+    });
+
+    server.post('/status', async (req, res)=>{
+        const usuario = req.headers.user;
+        console.log(usuario);
+        try {
+            const resposta = await db.collection('cadastrados').findOne({ name: usuario});
+            if(!resposta){
+                return res.sendStatus(404);
+            }
+
+            const atualizar = await db.collection('cadastrados').updateOne({ name: usuario}, {$set:{lastStatus: Date.now()}});
+
+            console.log(atualizar);
             
+            res.sendStatus(200)
+
         } catch (error) {
             console.log(error);
             res.sendStatus(500);
