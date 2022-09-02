@@ -104,15 +104,28 @@ const mensagensSchema = joi.object({
             console.log(error);
             res.sendStatus(500);
         }
-
-        
     })
     
-    server.get('/messages', (req, res) =>{
-        db.collection('mensagens').find().toArray().then((data)=>{
-            console.log(data);
-        });
-        res.sendStatus(201);
+    server.get('/messages', async (req, res) =>{
+        const { limit } = req.query;
+        const usuario = req.headers.user;
+
+        
+
+        try {
+            if (limit){
+                const resposta = await db.collection('mensagens').find({$or: [{ from: usuario } , { to: 'todos' } , {to: usuario }]}).limit(parseInt(limit)).toArray();
+                return res.send(resposta);
+            } 
+
+            const resposta = await db.collection('mensagens').find({$or: [{ from: usuario } , { to: 'todos' } , {to: usuario }]}).toArray();
+            return res.send(resposta);
+            
+            
+        } catch (error) {
+            console.log(error);
+            res.sendStatus(500);
+        }
     })
 
 server.listen(5000, () => console.log('listen on port 5000'));
