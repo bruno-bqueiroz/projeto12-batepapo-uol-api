@@ -50,7 +50,7 @@ const mensagensSchema = joi.object({
          try {
            const responseCadastro = await db.collection('cadastrados').insertOne({name: nome, lastStatus: Date.now()});
 
-            const responseMensagem = await db.collection('mensagens').insertOne({from: nome, to: 'Todos', text: 'entra na sala...', type: 'status', time: dayjs().format('HH:mm:ss')})
+            const responseMensagem = await db.collection('mensagens').insertOne({from: nome, to: 'todos', text: 'entra na sala...', type: 'status', time: dayjs().format('HH:mm:ss')})
                 
                 console.log(responseCadastro);
                 console.log(responseMensagem);
