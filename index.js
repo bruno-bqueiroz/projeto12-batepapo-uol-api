@@ -36,8 +36,7 @@ const mensagensSchema = joi.object({
 
         if(validation.error){
             return res.status(422).send(validation.error.message);
-        }
-
+        }   
         try {
             const response = await db.collection('cadastrados').findOne({ name: nome });
              if(response !== null){
@@ -71,9 +70,6 @@ const mensagensSchema = joi.object({
             console.log(error);
             res.sendStatus(500);
         }
-
-        
-        
     });
 // ENVIAR MENSAGENS
     server.post('/messages', async (req, res)=>{
